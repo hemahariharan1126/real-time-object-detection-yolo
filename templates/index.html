@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time YOLOv8 Detection</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; width: 100%; text-align: center; }
+        .video-wrapper { background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #333; margin-top: 20px; width: fit-content; margin-left: auto; margin-right: auto;}
+        img { max-width: 100%; display: block; }
+        .status-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #1f1f1f; border-bottom: 1px solid #333; }
+        .ai-badge { background: #00ff88; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; }
+        .detections-panel { margin-top: 20px; padding: 20px; background: #1f1f1f; border-radius: 8px; border: 1px solid #333; text-align: left; }
+        .detections-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; }
+        .detection-item { background: #333; padding: 5px 15px; border-radius: 4px; font-size: 0.9rem; border-left: 4px solid #00ff88; }
+        h1 { margin-bottom: 10px; letter-spacing: 1px; }
+        .desc { color: #888; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>STRIKER-YOLO CORE</h1>
+        <p class="desc">Real-time object detection stream powered by Ultra-fast YOLOv8n</p>
+        
+        <div class="video-wrapper">
+            <div class="status-header">
+                <span class="ai-badge">LIVE SESSION</span>
+                <span id="fps-display">FPS: --</span>
+            </div>
+            <img src="{{ url_for('video_feed') }}" alt="Live Stream">
+        </div>
+
+        <div class="detections-panel">
+            <h3>Active Detections</h3>
+            <div id="detections-container">
+                <p>Waiting for stream...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update detections periodically from the JSON endpoint
+        async function updateDetections() {
+            try {
+                const response = await fetch('/detections');
+                const data = await response.json();
+                const container = document.getElementById('detections-container');
+                
+                if (data.detections && data.detections.length > 0) {
+                    let html = '<ul class="detections-list">';
+                    data.detections.forEach(d => {
+                        html += `<li class="detection-item"><strong>${d.label.toUpperCase()}</strong> (${(d.confidence * 100).toFixed(1)}%)</li>`;
+                    });
+                    html += '</ul>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p>No objects detected.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching detections:', error);
+            }
+        }
+
+        setInterval(updateDetections, 500); // Update every half second
+    </script>
+</body>
+</html>
